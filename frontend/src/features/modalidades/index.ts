@@ -1,0 +1,1 @@
+export { ModalidadesPage } from './pages/ModalidadesPage'

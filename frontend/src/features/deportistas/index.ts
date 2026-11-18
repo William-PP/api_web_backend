@@ -1,0 +1,1 @@
+export { DeportistasPage } from './pages/DeportistasPage'

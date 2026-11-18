@@ -1,0 +1,656 @@
+{
+  "info": {
+    "_postman_id": "b1f4c2a0-9d3e-4f7a-8c12-6e5d4a3b2c10",
+    "name": "Gestión Deportiva API",
+    "description": "Colección para el backend Laravel 12 de Gestión Deportiva.\n\nFLOW RECOMENDADO:\n1) Ejecutar 'Auth > Login' (usa admin@club.test / password). El test guarda el token automáticamente en la variable 'token'.\n2) Ejecutar 'Deportistas > Listar' y 'Modalidades > Listar': sus tests guardan los primeros ID en 'deportistaId' y 'modalidadId'.\n3) Ya podés usar el resto de los endpoints privados.\n\nRequisito: Laragon con MySQL corriendo, migraciones ejecutadas y 'php artisan serve' en el puerto 8000.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Registro, login y recuperación de contraseña. El login guarda el token Bearer en la variable 'token'.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario Prueba\",\n  \"email\": \"usuario@club.test\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            },
+            "description": "Crea un usuario y devuelve user + token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token guardado');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Login con el usuario del seeder. Guarda el token en la variable 'token'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token guardado');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["forgot-password"]
+            },
+            "description": "Envía el enlace de reseteo (MAIL_MAILER=log, revisá storage/logs/laravel.log)."
+          }
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"TOKEN_DEL_LOG\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"nuevapassword\",\n  \"password_confirmation\": \"nuevapassword\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["reset-password"]
+            },
+            "description": "Restablece la contraseña usando el token del enlace."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Público",
+      "description": "Endpoints sin autenticación.",
+      "item": [
+        {
+          "name": "Listar deportistas públicos",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/deportistas",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "deportistas"]
+            },
+            "description": "Lista pública de deportistas."
+          }
+        },
+        {
+          "name": "Ver deportista público",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/deportistas/{{deportistaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "deportistas", "{{deportistaId}}"]
+            },
+            "description": "Detalle de un deportista (requiere que 'deportistaId' esté seteado)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sesión",
+      "description": "Requieren token Bearer.",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Devuelve el usuario autenticado."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["logout"]
+            },
+            "description": "Revoca el token actual (Sanctum)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Perfil",
+      "description": "Requieren token Bearer.",
+      "item": [
+        {
+          "name": "Ver perfil",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/perfil",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfil"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Club\",\n  \"email\": \"{{adminEmail}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/perfil",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfil"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar foto",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "foto", "type": "file", "src": [], "description": "Seleccioná una imagen jpeg/png/jpg/webp (máx 2MB)" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/perfil/foto",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfil", "foto"]
+            },
+            "description": "Subida de foto de perfil (multipart/form-data)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deportistas",
+      "description": "CRUD de deportistas. Requiere token Bearer.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/deportistas",
+              "host": ["{{baseUrl}}"],
+              "path": ["deportistas"]
+            },
+            "description": "Lista paginada. El test guarda el primer ID en 'deportistaId'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const first = json.data && json.data[0];",
+                  "if (first && first.id) {",
+                  "  pm.collectionVariables.set('deportistaId', String(first.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nombre", "value": "Juan", "type": "text" },
+                { "key": "apellido", "value": "Pérez", "type": "text" },
+                { "key": "fecha_nacimiento", "value": "2000-05-15", "type": "text" },
+                { "key": "modalidad_id", "value": "{{modalidadId}}", "type": "text" },
+                { "key": "foto", "type": "file", "src": [], "description": "Opcional: jpeg/png/jpg/webp, máx 2MB" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/deportistas",
+              "host": ["{{baseUrl}}"],
+              "path": ["deportistas"]
+            },
+            "description": "Crea un deportista. 'modalidad_id' debe existir."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('deportistaId', String(json.data.id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/deportistas/{{deportistaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["deportistas", "{{deportistaId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar (con foto opcional)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "_method", "value": "PUT", "type": "text" },
+                { "key": "nombre", "value": "Juan Carlos", "type": "text" },
+                { "key": "apellido", "value": "Pérez", "type": "text" },
+                { "key": "fecha_nacimiento", "value": "2000-05-15", "type": "text" },
+                { "key": "modalidad_id", "value": "{{modalidadId}}", "type": "text" },
+                { "key": "foto", "type": "file", "src": [], "description": "Opcional" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/deportistas/{{deportistaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["deportistas", "{{deportistaId}}"]
+            },
+            "description": "IMPORTANTE: se usa POST con _method=PUT porque PHP no parsea multipart/form-data en PUT directamente."
+          }
+        },
+        {
+          "name": "Eliminar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/deportistas/{{deportistaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["deportistas", "{{deportistaId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Modalidades",
+      "description": "CRUD de modalidades. Requieren token Bearer.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modalidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["modalidades"]
+            },
+            "description": "El test guarda el primer ID en 'modalidadId'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const first = json.data && json.data[0];",
+                  "if (first && first.id) {",
+                  "  pm.collectionVariables.set('modalidadId', String(first.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Natación\",\n  \"descripcion\": \"Modalidad acuática\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/modalidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["modalidades"]
+            },
+            "description": "El test guarda el ID creado en 'modalidadId'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('modalidadId', String(json.data.id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modalidades/{{modalidadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["modalidades", "{{modalidadId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Natación\",\n  \"descripcion\": \"Modalidad acuática - actualizada\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/modalidades/{{modalidadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["modalidades", "{{modalidadId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modalidades/{{modalidadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["modalidades", "{{modalidadId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Requieren token Bearer.",
+      "item": [
+        {
+          "name": "Resumen",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/resumen",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "resumen"]
+            }
+          }
+        },
+        {
+          "name": "Clima",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/clima?ciudad={{ciudad}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "clima"],
+              "query": [
+                { "key": "ciudad", "value": "{{ciudad}}" }
+              ]
+            },
+            "description": "Consulta Open-Meteo (requiere internet, sin API key)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "description": "Requieren token Bearer.",
+      "item": [
+        {
+          "name": "Deportistas PDF",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/deportistas.pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes", "deportistas.pdf"]
+            },
+            "description": "Genera un PDF con el listado de deportistas (dompdf)."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "adminEmail", "value": "admin@club.test", "type": "string" },
+    { "key": "adminPassword", "value": "password", "type": "string" },
+    { "key": "deportistaId", "value": "1", "type": "string" },
+    { "key": "modalidadId", "value": "1", "type": "string" },
+    { "key": "ciudad", "value": "Madrid", "type": "string" }
+  ]
+}
