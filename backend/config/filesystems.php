@@ -41,7 +41,8 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // URL relativa para que las fotos funcionen también detrás de un túnel
+            'url' => '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
